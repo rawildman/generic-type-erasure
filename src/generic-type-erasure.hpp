@@ -1,6 +1,8 @@
 #ifndef GENERIC_TYPE_ERASURE_HPP
 #define GENERIC_TYPE_ERASURE_HPP
 
+#include "type-helpers.hpp"
+
 #include <any>
 #include <iostream>
 #include <tuple>
@@ -11,56 +13,8 @@
 
 namespace generic
 {
-
 namespace detail
 {
-template <typename T> struct SignatureHelper
-{
-};
-
-template <typename R, typename... Args> struct SignatureHelper<R (Args...)>
-{
-  using ReturnType = R;
-  using ArgTypes = std::tuple<Args...>;
-};
-
-template <typename BaseSignature> struct WrapperMemberFunctionSignature
-{
-  using ReturnType = typename SignatureHelper<BaseSignature>::ReturnType;
-  using ArgTuple = typename SignatureHelper<BaseSignature>::ArgTypes;
-  using Signature = ReturnType (std::any &, const std::any &, ArgTuple &&);
-};
-
-template <typename BaseSignature> struct WrapperConstMemberFunctionSignature
-{
-  using ReturnType = typename SignatureHelper<BaseSignature>::ReturnType;
-  using ArgTuple = typename SignatureHelper<BaseSignature>::ArgTypes;
-  using Signature
-      = ReturnType (const std::any &, const std::any &, ArgTuple &&);
-};
-
-template <typename T> struct MemberFunctionSignatureHelper
-{
-};
-
-template <typename StructName, typename R, typename... Args>
-struct MemberFunctionSignatureHelper<R (StructName::*) (Args...)>
-{
-  using Name = StructName;
-  using ReturnType = R;
-  using ArgTypes = std::tuple<Args...>;
-  static constexpr auto is_const = false;
-};
-
-template <typename StructName, typename R, typename... Args>
-struct MemberFunctionSignatureHelper<R (StructName::*) (Args...) const>
-{
-  using Name = StructName;
-  using ReturnType = R;
-  using ArgTypes = std::tuple<Args...>;
-  static constexpr auto is_const = true;
-};
-
 template <typename T, typename MemberFunction, typename Signature>
 auto
 member_function ()
