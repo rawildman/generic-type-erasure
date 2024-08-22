@@ -89,7 +89,7 @@ TEST_CASE ("Wrapper", "[wrapper]")
 {
   const auto t = Tester{};
   const auto wrapper
-      = generic::TypeErased<FortyTwo, int ()>{ t, &Tester::forty_two };
+      = gte::TypeErased<FortyTwo, int ()>{ t, &Tester::forty_two };
   REQUIRE (wrapper.call<FortyTwo> () == 42);
 }
 
@@ -116,8 +116,8 @@ TEST_CASE ("Wrapper copy moves", "[wrapper]")
 {
   const auto t = Tester{};
   const auto wrapper_const_ref_arg
-      = generic::TypeErased<CopyCounter, std::pair<unsigned, unsigned> (
-                                             const CopyMoveCounter &)>{
+      = gte::TypeErased<CopyCounter, std::pair<unsigned, unsigned> (
+                                         const CopyMoveCounter &)>{
           t, &Tester::const_ref_arg
         };
   auto counter = CopyMoveCounter{};
@@ -125,16 +125,16 @@ TEST_CASE ("Wrapper copy moves", "[wrapper]")
   REQUIRE (wrapper_const_ref_arg.call<CopyCounter> (counter).second == 0);
 
   const auto wrapper_value_arg
-      = generic::TypeErased<CopyCounter,
-                            std::pair<unsigned, unsigned> (CopyMoveCounter)>{
+      = gte::TypeErased<CopyCounter,
+                        std::pair<unsigned, unsigned> (CopyMoveCounter)>{
           t, &Tester::value_arg
         };
   REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).first == 1);
   REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).second == 2);
 
   const auto wrapper_r_value_ref_arg
-      = generic::TypeErased<CopyCounter,
-                            std::pair<unsigned, unsigned> (CopyMoveCounter)>{
+      = gte::TypeErased<CopyCounter,
+                        std::pair<unsigned, unsigned> (CopyMoveCounter)>{
           t, &Tester::r_value_ref_arg
         };
   auto counter_for_r_values_1 = CopyMoveCounter{};
@@ -153,7 +153,7 @@ TEST_CASE ("Non-const ref", "[wrapper]")
 {
   auto t = Tester{};
   auto wrapper
-      = generic::TypeErased<FortyTwo, int (int)>{ t, &Tester::set_forty_two };
+      = gte::TypeErased<FortyTwo, int (int)>{ t, &Tester::set_forty_two };
 
   REQUIRE (wrapper.call<FortyTwo> (43) == 42);
   REQUIRE (wrapper.call<FortyTwo> (44) == 43);

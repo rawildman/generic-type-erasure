@@ -5,7 +5,7 @@
 #include <tuple>
 #include <type_traits>
 
-namespace generic::detail
+namespace gte::detail
 {
 template <typename T> struct SignatureHelper
 {

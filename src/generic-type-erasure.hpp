@@ -11,7 +11,7 @@
 
 #include <cassert>
 
-namespace generic
+namespace gte
 {
 namespace detail
 {
