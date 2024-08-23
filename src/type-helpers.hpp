@@ -1,7 +1,6 @@
 #ifndef TYPE_HELPERS_HPP
 #define TYPE_HELPERS_HPP
 
-#include <any>
 #include <tuple>
 #include <type_traits>
 
