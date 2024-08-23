@@ -4,6 +4,8 @@ project(GenericTypeErasure LANGUAGES CXX VERSION 0.0.1)
 
 add_subdirectory(src)
 
+set(WARNINGS -Wall -Wextra -Wshadow -pedantic)
+
 if(BUILD_TESTS)
   Include(FetchContent)
   FetchContent_Declare(

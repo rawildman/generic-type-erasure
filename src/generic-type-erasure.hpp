@@ -20,7 +20,6 @@ member_function ()
 {
   using MemberSignature = MemberFunctionSignatureHelper<MemberFunction>;
   using ArgTypes = typename detail::SignatureHelper<Signature>::ArgTypes;
-  using ReturnType = typename detail::SignatureHelper<Signature>::ReturnType;
   if constexpr (MemberSignature::is_const)
     {
       return [] (const std::any &object, const std::any &pointer_to_member,
