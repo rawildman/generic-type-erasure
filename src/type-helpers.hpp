@@ -46,6 +46,13 @@ struct MemberFunctionSignatureHelper<R (StructName::*) (Args...) const>
   static constexpr auto is_const = true;
 };
 
+template<typename... Pairs>
+struct PairsToTuples
+{
+  using FirstTuple = std::tuple<typename Pairs::first_type...>;
+  using SecondTuple = std::tuple<typename Pairs::second_type...>;
+};
+
 }
 
 #endif

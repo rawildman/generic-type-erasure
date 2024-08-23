@@ -75,3 +75,12 @@ TEST_CASE ("Add arguments to signature helper", "[signaturehelper]")
                                            std::tuple<double, int> &&>,
                                 ArgsFromWrapper>);
 }
+
+TEST_CASE ("Pairs to tuples", "[pairstotuples]")
+{
+  using Tuples = gte::detail::PairsToTuples<std::pair<int, double> >;
+  static_assert (
+      std::is_same_v<typename Tuples::FirstTuple, std::tuple<int> >);
+  static_assert (
+      std::is_same_v<typename Tuples::SecondTuple, std::tuple<double> >);
+}
