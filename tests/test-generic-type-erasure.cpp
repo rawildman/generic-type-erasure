@@ -3,19 +3,17 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
-struct CopyMoveCounter
+class CopyMoveCounter
 {
-  unsigned copies = 0;
-  unsigned moves = 0;
-
+public:
   CopyMoveCounter () = default;
   CopyMoveCounter (const CopyMoveCounter &copy)
-      : copies{ copy.copies + 1 }, moves{ copy.moves }
+      : m_copies{ copy.m_copies + 1 }, m_moves{ copy.m_moves }
   {
     std::cout << "CopyMoveCounter(const&)\n";
   }
   CopyMoveCounter (CopyMoveCounter &&copy)
-      : copies{ copy.copies }, moves{ copy.moves + 1 }
+      : m_copies{ copy.m_copies }, m_moves{ copy.m_moves + 1 }
   {
     std::cout << "CopyMoveCounter(&&)\n";
   }
@@ -25,8 +23,8 @@ struct CopyMoveCounter
     std::cout << "operator=(const&)\n";
     if (this != &copy)
       {
-        copies = copy.copies + 1;
-        moves = copy.moves;
+        m_copies = copy.m_copies + 1;
+        m_moves = copy.m_moves;
       }
     return *this;
   }
@@ -34,10 +32,25 @@ struct CopyMoveCounter
   operator= (CopyMoveCounter &&copy)
   {
     std::cout << "operator=(&&)\n";
-    copies = copy.copies;
-    moves = copy.moves + 1;
+    m_copies = copy.m_copies;
+    m_moves = copy.m_moves + 1;
     return *this;
   }
+
+  auto
+  copies () const -> unsigned
+  {
+    return m_copies;
+  }
+  auto
+  moves () const -> unsigned
+  {
+    return m_moves;
+  }
+
+private:
+  unsigned m_copies = 0;
+  unsigned m_moves = 0;
 };
 
 struct Tester
@@ -60,18 +73,18 @@ struct Tester
   const_ref_arg (const CopyMoveCounter &arg) const
       -> std::pair<unsigned, unsigned>
   {
-    return { arg.copies, arg.moves };
+    return { arg.copies (), arg.moves () };
   }
   auto
   value_arg (CopyMoveCounter arg) const -> std::pair<unsigned, unsigned>
   {
-    return { arg.copies, arg.moves };
+    return { arg.copies (), arg.moves () };
   }
   auto
   r_value_ref_arg (CopyMoveCounter &&arg) const
       -> std::pair<unsigned, unsigned>
   {
-    return { arg.copies, arg.moves };
+    return { arg.copies (), arg.moves () };
   }
 };
 
@@ -96,20 +109,20 @@ TEST_CASE ("Wrapper", "[wrapper]")
 TEST_CASE ("Copy counts", "[wrapper]")
 {
   auto copy_move_counter = CopyMoveCounter{};
-  REQUIRE (copy_move_counter.copies == 0);
-  REQUIRE (copy_move_counter.moves == 0);
+  REQUIRE (copy_move_counter.copies () == 0);
+  REQUIRE (copy_move_counter.moves () == 0);
 
   const auto &cm_counter_ref = copy_move_counter;
-  REQUIRE (cm_counter_ref.copies == 0);
-  REQUIRE (cm_counter_ref.moves == 0);
+  REQUIRE (cm_counter_ref.copies () == 0);
+  REQUIRE (cm_counter_ref.moves () == 0);
 
   const auto cm_counter_copy = copy_move_counter;
-  REQUIRE (cm_counter_copy.copies == 1);
-  REQUIRE (cm_counter_copy.moves == 0);
+  REQUIRE (cm_counter_copy.copies () == 1);
+  REQUIRE (cm_counter_copy.moves () == 0);
 
   const auto cm_counter_move = std::move (copy_move_counter);
-  REQUIRE (cm_counter_move.copies == 0);
-  REQUIRE (cm_counter_move.moves == 1);
+  REQUIRE (cm_counter_move.copies () == 0);
+  REQUIRE (cm_counter_move.moves () == 1);
 }
 
 TEST_CASE ("Wrapper copy moves", "[wrapper]")
