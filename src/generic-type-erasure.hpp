@@ -4,7 +4,6 @@
 #include "type-helpers.hpp"
 
 #include <any>
-#include <iostream>
 #include <tuple>
 #include <type_traits>
 #include <variant>
@@ -46,12 +45,21 @@ member_function ()
       };
     }
 }
-
 }
 
-template <typename Tag, typename Signature> class TypeErased
+template <typename TagType, typename SignatureType>
+struct TagAndSignature
+{
+  using Tag = TagType;
+  using Signature = SignatureType;
+};
+
+template <typename TagAndSignatureType> class TypeErased
 {
 private:
+  using Signature = typename TagAndSignatureType::Signature;
+  using Tag = typename TagAndSignatureType::Tag;
+
   using WrappedMemberFunctionSignature =
       typename detail::SignatureWithExtraArgs<Signature, std::any &,
                                               const std::any &>::Signature;
@@ -80,7 +88,6 @@ public:
   call (Args &&...args) const
   {
     static_assert (std::is_same_v<CallTag, Tag>);
-    std::cout << "call() const\n";
     if (std::holds_alternative<WrappedConstMemberFunctionPtr> (
             mMemberFunctionVariant))
       {
@@ -98,7 +105,6 @@ public:
   call (Args &&...args)
   {
     static_assert (std::is_same_v<CallTag, Tag>);
-    std::cout << "call()\n";
     if (std::holds_alternative<WrappedConstMemberFunctionPtr> (
             mMemberFunctionVariant))
       {
@@ -117,7 +123,6 @@ public:
 
 private:
   WrappedMemberFunctionVariant mMemberFunctionVariant;
-
   std::any mMemberFunction;
   std::any mObject;
 };

@@ -100,9 +100,11 @@ struct CopyCounter
 
 TEST_CASE ("Wrapper", "[wrapper]")
 {
+  using FortyTwoFunction = gte::TagAndSignature<FortyTwo, int ()>;
+
   const auto t = Tester{};
   const auto wrapper
-      = gte::TypeErased<FortyTwo, int ()>{ t, &Tester::forty_two };
+      = gte::TypeErased<FortyTwoFunction>{ t, &Tester::forty_two };
   REQUIRE (wrapper.call<FortyTwo> () == 42);
 }
 
@@ -128,45 +130,57 @@ TEST_CASE ("Copy counts", "[wrapper]")
 TEST_CASE ("Wrapper copy moves", "[wrapper]")
 {
   const auto t = Tester{};
-  const auto wrapper_const_ref_arg
-      = gte::TypeErased<CopyCounter, std::pair<unsigned, unsigned> (
-                                         const CopyMoveCounter &)>{
-          t, &Tester::const_ref_arg
-        };
-  auto counter = CopyMoveCounter{};
-  REQUIRE (wrapper_const_ref_arg.call<CopyCounter> (counter).first == 0);
-  REQUIRE (wrapper_const_ref_arg.call<CopyCounter> (counter).second == 0);
+  SECTION ("Const ref")
+  {
+    using CopyMoveFunction
+        = gte::TagAndSignature<CopyCounter, std::pair<unsigned, unsigned> (
+                                                const CopyMoveCounter &)>;
+    const auto wrapper_const_ref_arg
+        = gte::TypeErased<CopyMoveFunction>{ t, &Tester::const_ref_arg };
+    auto counter = CopyMoveCounter{};
+    REQUIRE (wrapper_const_ref_arg.call<CopyCounter> (counter).first == 0);
+    REQUIRE (wrapper_const_ref_arg.call<CopyCounter> (counter).second == 0);
+  }
+  SECTION ("Value")
+  {
+    using CopyMoveFunction
+        = gte::TagAndSignature<CopyCounter, std::pair<unsigned, unsigned> (
+                                                CopyMoveCounter)>;
+    const auto wrapper_value_arg
+        = gte::TypeErased<CopyMoveFunction>{ t, &Tester::value_arg };
+    auto counter = CopyMoveCounter{};
+    REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).first == 1);
+    REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).second == 2);
+  }
+  SECTION ("R-value ref")
+  {
+    using CopyMoveFunction
+        = gte::TagAndSignature<CopyCounter, std::pair<unsigned, unsigned> (
+                                                CopyMoveCounter &&)>;
 
-  const auto wrapper_value_arg
-      = gte::TypeErased<CopyCounter,
-                        std::pair<unsigned, unsigned> (CopyMoveCounter)>{
-          t, &Tester::value_arg
-        };
-  REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).first == 1);
-  REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).second == 2);
+    const auto wrapper_r_value_ref_arg
+        = gte::TypeErased<CopyMoveFunction>{ t, &Tester::r_value_ref_arg };
 
-  const auto wrapper_r_value_ref_arg
-      = gte::TypeErased<CopyCounter,
-                        std::pair<unsigned, unsigned> (CopyMoveCounter)>{
-          t, &Tester::r_value_ref_arg
-        };
-  auto counter_for_r_values_1 = CopyMoveCounter{};
-  REQUIRE (wrapper_r_value_ref_arg
-               .call<CopyCounter> (std::move (counter_for_r_values_1))
-               .first
-           == 0);
-  auto counter_for_r_values_2 = CopyMoveCounter{};
-  REQUIRE (wrapper_r_value_ref_arg
-               .call<CopyCounter> (std::move (counter_for_r_values_2))
-               .second
-           == 2);
+    auto counter_for_r_values_1 = CopyMoveCounter{};
+    REQUIRE (wrapper_r_value_ref_arg
+                 .call<CopyCounter> (std::move (counter_for_r_values_1))
+                 .first
+             == 0);
+
+    auto counter_for_r_values_2 = CopyMoveCounter{};
+    REQUIRE (wrapper_r_value_ref_arg
+                 .call<CopyCounter> (std::move (counter_for_r_values_2))
+                 .second
+             == 0);
+  }
 }
 
 TEST_CASE ("Non-const ref", "[wrapper]")
 {
+  using SetFortyTwoFunction = gte::TagAndSignature<FortyTwo, int (int)>;
   auto t = Tester{};
   auto wrapper
-      = gte::TypeErased<FortyTwo, int (int)>{ t, &Tester::set_forty_two };
+      = gte::TypeErased<SetFortyTwoFunction>{ t, &Tester::set_forty_two };
 
   REQUIRE (wrapper.call<FortyTwo> (43) == 42);
   REQUIRE (wrapper.call<FortyTwo> (44) == 43);
@@ -174,20 +188,21 @@ TEST_CASE ("Non-const ref", "[wrapper]")
 
 TEST_CASE ("Copies and moves on construction", "[wrapper]")
 {
+  using CopyCounterFunction = gte::TagAndSignature<CopyCounter, unsigned ()>;
+  SECTION ("Expect copy")
   {
-    std::cout << "Testing copies---------------\n";
     const auto copy_move_counter = CopyMoveCounter{};
-    const auto wrapper = gte::TypeErased<CopyCounter, unsigned ()>{
-      copy_move_counter, &CopyMoveCounter::copies
-    };
+    const auto wrapper
+        = gte::TypeErased<CopyCounterFunction>{ copy_move_counter,
+                                                &CopyMoveCounter::copies };
     REQUIRE (wrapper.call<CopyCounter> () == 1);
   }
+  SECTION ("Expect no copies")
   {
-    std::cout << "Testing copies---------------\n";
     auto copy_move_counter = CopyMoveCounter{};
-    const auto wrapper = gte::TypeErased<CopyCounter, unsigned ()>{
-      std::move(copy_move_counter), &CopyMoveCounter::copies
-    };
+    const auto wrapper
+        = gte::TypeErased<CopyCounterFunction>{ std::move (copy_move_counter),
+                                                &CopyMoveCounter::copies };
     REQUIRE (wrapper.call<CopyCounter> () == 0);
   }
 }
