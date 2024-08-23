@@ -171,3 +171,23 @@ TEST_CASE ("Non-const ref", "[wrapper]")
   REQUIRE (wrapper.call<FortyTwo> (43) == 42);
   REQUIRE (wrapper.call<FortyTwo> (44) == 43);
 }
+
+TEST_CASE ("Copies and moves on construction", "[wrapper]")
+{
+  {
+    std::cout << "Testing copies---------------\n";
+    const auto copy_move_counter = CopyMoveCounter{};
+    const auto wrapper = gte::TypeErased<CopyCounter, unsigned ()>{
+      copy_move_counter, &CopyMoveCounter::copies
+    };
+    REQUIRE (wrapper.call<CopyCounter> () == 1);
+  }
+  {
+    std::cout << "Testing copies---------------\n";
+    auto copy_move_counter = CopyMoveCounter{};
+    const auto wrapper = gte::TypeErased<CopyCounter, unsigned ()>{
+      std::move(copy_move_counter), &CopyMoveCounter::copies
+    };
+    REQUIRE (wrapper.call<CopyCounter> () == 0);
+  }
+}
