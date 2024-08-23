@@ -25,7 +25,7 @@ member_function ()
       return [] (const std::any &object, const std::any &pointer_to_member,
                  ArgTypes &&args) {
         const auto any_as_t
-            = std::tuple<const T &>{ std::any_cast<const T&> (object) };
+            = std::tuple<const T &>{ std::any_cast<const T &> (object) };
         const auto &any_as_mem_fun
             = std::any_cast<MemberFunction> (pointer_to_member);
         return std::apply (any_as_mem_fun,
@@ -36,7 +36,7 @@ member_function ()
     {
       return [] (std::any &object, const std::any &pointer_to_member,
                  ArgTypes &&args) {
-        auto any_as_t = std::tuple<T &>{ std::any_cast<T&> (object) };
+        auto any_as_t = std::tuple<T &>{ std::any_cast<T &> (object) };
         const auto &any_as_mem_fun
             = std::any_cast<MemberFunction> (pointer_to_member);
         return std::apply (any_as_mem_fun,
@@ -46,8 +46,7 @@ member_function ()
 }
 }
 
-template <typename TagType, typename SignatureType>
-struct TagAndSignature
+template <typename TagType, typename SignatureType> struct TagAndSignature
 {
   using Tag = TagType;
   using Signature = SignatureType;

@@ -35,6 +35,36 @@ TEST_CASE ("Has type", "[typemap]")
   static_assert (!gte::detail::has_type<double, TestTuple> (indices));
 }
 
+TEST_CASE ("Number of types", "[typemap]")
+{
+  using TestTuple = std::tuple<Key1, int, Key2, int>;
+  constexpr auto indices
+      = std::make_index_sequence<std::tuple_size_v<TestTuple> > ();
+
+  static_assert (gte::detail::type_count<Key1, TestTuple> (indices) == 1);
+  static_assert (gte::detail::type_count<Key2, TestTuple> (indices) == 1);
+  static_assert (gte::detail::type_count<int, TestTuple> (indices) == 2);
+  static_assert (gte::detail::type_count<double, TestTuple> (indices) == 0);
+}
+
+TEST_CASE ("All types unique", "[typemap]")
+{
+  SECTION ("Non-unique")
+  {
+    using TestTuple = std::tuple<Key1, int, Key2, int>;
+    constexpr auto indices
+        = std::make_index_sequence<std::tuple_size_v<TestTuple> > ();
+    static_assert (!gte::detail::all_types_unique<TestTuple> (indices));
+  }
+  SECTION ("Unique")
+  {
+    using TestTuple = std::tuple<Key1, Key2, int>;
+    constexpr auto indices
+        = std::make_index_sequence<std::tuple_size_v<TestTuple> > ();
+    static_assert (gte::detail::all_types_unique<TestTuple> (indices));
+  }
+}
+
 TEST_CASE ("Type map", "[typemap]")
 {
   using TestMap = gte::TypeMap<std::pair<Key1, int>, std::pair<Key2, double> >;
