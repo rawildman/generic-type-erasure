@@ -17,19 +17,12 @@ template <typename R, typename... Args> struct SignatureHelper<R (Args...)>
   using ArgTypes = std::tuple<Args...>;
 };
 
-template <typename BaseSignature> struct WrapperMemberFunctionSignature
+template <typename BaseSignature, typename... ExtraArgs>
+struct SignatureWithExtraArgs
 {
   using ReturnType = typename SignatureHelper<BaseSignature>::ReturnType;
   using ArgTuple = typename SignatureHelper<BaseSignature>::ArgTypes;
-  using Signature = ReturnType (std::any &, const std::any &, ArgTuple &&);
-};
-
-template <typename BaseSignature> struct WrapperConstMemberFunctionSignature
-{
-  using ReturnType = typename SignatureHelper<BaseSignature>::ReturnType;
-  using ArgTuple = typename SignatureHelper<BaseSignature>::ArgTypes;
-  using Signature
-      = ReturnType (const std::any &, const std::any &, ArgTuple &&);
+  using Signature = ReturnType (ExtraArgs..., ArgTuple &&);
 };
 
 template <typename T> struct MemberFunctionSignatureHelper

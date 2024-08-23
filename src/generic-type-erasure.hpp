@@ -53,10 +53,11 @@ template <typename Tag, typename Signature> class TypeErased
 {
 private:
   using WrappedMemberFunctionSignature =
-      typename detail::WrapperMemberFunctionSignature<Signature>::Signature;
+      typename detail::SignatureWithExtraArgs<Signature, std::any &,
+                                              const std::any &>::Signature;
   using WrappedConstMemberFunctionSignature =
-      typename detail::WrapperConstMemberFunctionSignature<
-          Signature>::Signature;
+      typename detail::SignatureWithExtraArgs<Signature, const std::any &,
+                                              const std::any &>::Signature;
   using WrappedMemberFunctionPtr
       = std::add_pointer_t<WrappedMemberFunctionSignature>;
   using WrappedConstMemberFunctionPtr

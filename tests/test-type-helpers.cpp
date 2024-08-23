@@ -41,21 +41,6 @@ TEST_CASE ("SignatureHelper static assertions", "[signaturehelper]")
                                 typename TestVoidIntDouble::ArgTypes>);
 }
 
-TEST_CASE ("Wrapper member function signature helper static assertions",
-           "[signaturehelper]")
-{
-  using TestWrapperMemFun
-      = gte::detail::WrapperConstMemberFunctionSignature<int (double, int)>;
-  using ReturnFromWrapper = typename gte::detail::SignatureHelper<
-      typename TestWrapperMemFun::Signature>::ReturnType;
-  static_assert (std::is_same_v<int, ReturnFromWrapper>);
-  using ArgsFromWrapper = typename gte::detail::SignatureHelper<
-      typename TestWrapperMemFun::Signature>::ArgTypes;
-  static_assert (std::is_same_v<std::tuple<const std::any &, const std::any &,
-                                           std::tuple<double, int> &&>,
-                                ArgsFromWrapper>);
-}
-
 TEST_CASE ("Member function signature helper static assertions",
            "[signaturehelper]")
 {
@@ -73,4 +58,19 @@ TEST_CASE ("Member function signature helper static assertions",
   static_assert (
       std::is_same_v<typename TestNonConst::ArgTypes, std::tuple<int> >);
   static_assert (!TestNonConst::is_const);
+}
+
+TEST_CASE ("Add arguments to signature helper", "[signaturehelper]")
+{
+  using TestWrapperMemFun = gte::detail::SignatureWithExtraArgs<
+      int (double, int), const std::any &, const std::any &>;
+  using ReturnFromWrapper = typename gte::detail::SignatureHelper<
+      typename TestWrapperMemFun::Signature>::ReturnType;
+  static_assert (std::is_same_v<int, ReturnFromWrapper>);
+
+  using ArgsFromWrapper = typename gte::detail::SignatureHelper<
+      typename TestWrapperMemFun::Signature>::ArgTypes;
+  static_assert (std::is_same_v<std::tuple<const std::any &, const std::any &,
+                                           std::tuple<double, int> &&>,
+                                ArgsFromWrapper>);
 }
