@@ -1,7 +1,6 @@
 #include "generic-type-erasure.hpp"
 
 #include <catch2/catch_test_macros.hpp>
-#include <iostream>
 
 namespace
 {
@@ -13,19 +12,16 @@ public:
   CopyMoveCounter (const CopyMoveCounter &copy)
       : m_copies{ copy.m_copies + 1 }, m_moves{ copy.m_moves }
   {
-    std::cout << "CopyMoveCounter(const&)\n";
   }
 
   CopyMoveCounter (CopyMoveCounter &&copy)
       : m_copies{ copy.m_copies }, m_moves{ copy.m_moves + 1 }
   {
-    std::cout << "CopyMoveCounter(&&)\n";
   }
 
   auto
   operator= (const CopyMoveCounter &copy) -> CopyMoveCounter &
   {
-    std::cout << "operator=(const&)\n";
     if (this != &copy)
       {
         m_copies = copy.m_copies + 1;
@@ -37,7 +33,6 @@ public:
   auto
   operator= (CopyMoveCounter &&copy) -> CopyMoveCounter &
   {
-    std::cout << "operator=(&&)\n";
     m_copies = copy.m_copies;
     m_moves = copy.m_moves + 1;
     return *this;
@@ -64,7 +59,7 @@ struct Tester
   int answer = 42;
 
   auto
-  forty_two () const -> int
+  the_answer () const -> int
   {
     return answer;
   }
@@ -76,7 +71,7 @@ struct Tester
   }
 
   auto
-  set_forty_two (const int new_value) -> int
+  set_the_answer (const int new_value) -> int
   {
     const auto old_answer = answer;
     answer = new_value;
@@ -104,13 +99,13 @@ struct Tester
   }
 };
 
-struct FortyTwo
+struct TheAnswer
 {
 };
 struct MultiplyTheAnswer
 {
 };
-struct SetFortyTwo
+struct SetTheAnswer
 {
 };
 struct CopyCounter
@@ -120,12 +115,12 @@ struct CopyCounter
 
 TEST_CASE ("Wrapper", "[wrapper]")
 {
-  using FortyTwoFunction = gte::TagAndSignature<FortyTwo, int ()>;
+  using TheAnswerFunction = gte::TagAndSignature<TheAnswer, int ()>;
 
   const auto t = Tester{};
   const auto wrapper
-      = gte::TypeErased<FortyTwoFunction>{ t, &Tester::forty_two };
-  REQUIRE (wrapper.call<FortyTwo> () == 42);
+      = gte::TypeErased<TheAnswerFunction>{ t, &Tester::the_answer };
+  REQUIRE (wrapper.call<TheAnswer> () == 42);
 }
 
 TEST_CASE ("Copy counts", "[wrapper]")
@@ -197,13 +192,13 @@ TEST_CASE ("Wrapper copy moves", "[wrapper]")
 
 TEST_CASE ("Non-const ref", "[wrapper]")
 {
-  using SetFortyTwoFunction = gte::TagAndSignature<FortyTwo, int (int)>;
+  using SetTheAnswerFunction = gte::TagAndSignature<TheAnswer, int (int)>;
   const auto t = Tester{};
   auto wrapper
-      = gte::TypeErased<SetFortyTwoFunction>{ t, &Tester::set_forty_two };
+      = gte::TypeErased<SetTheAnswerFunction>{ t, &Tester::set_the_answer };
 
-  REQUIRE (wrapper.call<FortyTwo> (43) == 42);
-  REQUIRE (wrapper.call<FortyTwo> (44) == 43);
+  REQUIRE (wrapper.call<TheAnswer> (43) == 42);
+  REQUIRE (wrapper.call<TheAnswer> (44) == 43);
 }
 
 TEST_CASE ("Copies and moves on construction", "[wrapper]")
@@ -231,43 +226,43 @@ TEST_CASE ("Tags to map", "[wrapper]")
 {
   using Map
       = gte::detail::TagValueMap<int,
-                                 gte::TagAndSignature<FortyTwo, void ()> >;
+                                 gte::TagAndSignature<TheAnswer, void ()> >;
   const auto map = typename Map::Map{ 42 };
-  REQUIRE (map.template get<FortyTwo> () == 42);
+  REQUIRE (map.template get<TheAnswer> () == 42);
 }
 
 TEST_CASE ("Member function map", "[wrapper]")
 {
   using Map = gte::detail::TagMemberFunctionMap<
-      gte::TagAndSignature<FortyTwo, void ()> >;
+      gte::TagAndSignature<TheAnswer, void ()> >;
   static_assert (Map::Map::number_of_keys == 1);
 }
 
 TEST_CASE ("Multiple const member functions", "[wrapper]")
 {
-  using FortyTwoFunction = gte::TagAndSignature<FortyTwo, int ()>;
+  using TheAnswerFunction = gte::TagAndSignature<TheAnswer, int ()>;
   using MultiplyFunction = gte::TagAndSignature<MultiplyTheAnswer, int (int)>;
 
   auto t = Tester{};
-  const auto wrapper = gte::TypeErased<FortyTwoFunction, MultiplyFunction>{
-    t, &Tester::forty_two, &Tester::multiply_the_answer
+  const auto wrapper = gte::TypeErased<TheAnswerFunction, MultiplyFunction>{
+    t, &Tester::the_answer, &Tester::multiply_the_answer
   };
 
-  REQUIRE (wrapper.call<FortyTwo> () == 42);
+  REQUIRE (wrapper.call<TheAnswer> () == 42);
   REQUIRE (wrapper.call<MultiplyTheAnswer> (2) == 84);
 }
 
 TEST_CASE ("Multiple member functions, mixed const, non-const", "[wrapper]")
 {
-  using FortyTwoFunction = gte::TagAndSignature<FortyTwo, int ()>;
-  using SetFunction = gte::TagAndSignature<SetFortyTwo, int (int)>;
+  using TheAnswerFunction = gte::TagAndSignature<TheAnswer, int ()>;
+  using SetFunction = gte::TagAndSignature<SetTheAnswer, int (int)>;
 
   auto t = Tester{};
-  auto wrapper = gte::TypeErased<SetFunction, FortyTwoFunction>{
-    t, &Tester::set_forty_two, &Tester::forty_two
+  auto wrapper = gte::TypeErased<SetFunction, TheAnswerFunction>{
+    t, &Tester::set_the_answer, &Tester::the_answer
   };
 
-  REQUIRE (wrapper.call<FortyTwo> () == 42);
-  REQUIRE (wrapper.call<SetFortyTwo> (43) == 42);
-  REQUIRE (wrapper.call<FortyTwo> () == 43);
+  REQUIRE (wrapper.call<TheAnswer> () == 42);
+  REQUIRE (wrapper.call<SetTheAnswer> (43) == 42);
+  REQUIRE (wrapper.call<TheAnswer> () == 43);
 }
