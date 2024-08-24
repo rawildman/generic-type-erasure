@@ -3,6 +3,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
+namespace
+{
 class CopyMoveCounter
 {
 public:
@@ -97,6 +99,7 @@ struct FortyThree
 struct CopyCounter
 {
 };
+}
 
 TEST_CASE ("Wrapper", "[wrapper]")
 {
@@ -205,4 +208,20 @@ TEST_CASE ("Copies and moves on construction", "[wrapper]")
                                                 &CopyMoveCounter::copies };
     REQUIRE (wrapper.call<CopyCounter> () == 0);
   }
+}
+
+TEST_CASE ("Tags to map", "[wrapper]")
+{
+  using Map
+      = gte::detail::TagValueMap<int,
+                                 gte::TagAndSignature<FortyTwo, void ()> >;
+  const auto map = typename Map::Map{ 42 };
+  REQUIRE (map.template get<FortyTwo> () == 42);
+}
+
+TEST_CASE ("Member function map", "[wrapper]")
+{
+  using Map = gte::detail::TagMemberFunctionMap<
+      gte::TagAndSignature<FortyTwo, void ()> >;
+  static_assert (Map::Map::number_of_keys == 1);
 }

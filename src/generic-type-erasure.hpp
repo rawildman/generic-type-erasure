@@ -2,6 +2,7 @@
 #define GENERIC_TYPE_ERASURE_HPP
 
 #include "type-helpers.hpp"
+#include "type-map.hpp"
 
 #include <any>
 #include <tuple>
@@ -26,7 +27,7 @@ member_function ()
                  ArgTypes &&args) {
         const auto any_as_t
             = std::tuple<const T &>{ std::any_cast<const T &> (object) };
-        const auto &any_as_mem_fun
+        const auto any_as_mem_fun
             = std::any_cast<MemberFunction> (pointer_to_member);
         return std::apply (any_as_mem_fun,
                            std::tuple_cat (any_as_t, std::move (args)));
@@ -37,24 +38,18 @@ member_function ()
       return [] (std::any &object, const std::any &pointer_to_member,
                  ArgTypes &&args) {
         auto any_as_t = std::tuple<T &>{ std::any_cast<T &> (object) };
-        const auto &any_as_mem_fun
+        const auto any_as_mem_fun
             = std::any_cast<MemberFunction> (pointer_to_member);
         return std::apply (any_as_mem_fun,
                            std::tuple_cat (any_as_t, std::move (args)));
       };
     }
 }
-}
 
-template <typename TagType, typename SignatureType> struct TagAndSignature
-{
-  using Tag = TagType;
-  using Signature = SignatureType;
-};
+constexpr auto const_member_function_wrapper_index = std::size_t{ 0 };
 
-template <typename TagAndSignatureType> class TypeErased
+template <typename TagAndSignatureType> struct MemberFunctionHelper
 {
-private:
   using Signature = typename TagAndSignatureType::Signature;
   using Tag = typename TagAndSignatureType::Tag;
 
@@ -70,14 +65,43 @@ private:
       = std::add_pointer_t<WrappedConstMemberFunctionSignature>;
 
   using WrappedMemberFunctionVariant
-      = std::variant<WrappedMemberFunctionPtr, WrappedConstMemberFunctionPtr>;
+      = std::variant<WrappedConstMemberFunctionPtr, WrappedMemberFunctionPtr>;
+};
+
+template <typename Value, typename... TagAndSignatureTypes> struct TagValueMap
+{
+  using Map = TypeMap<std::pair<
+      typename MemberFunctionHelper<TagAndSignatureTypes>::Tag, Value>...>;
+};
+
+template <typename... TagAndSignatureTypes> struct TagMemberFunctionMap
+{
+  using Map = TypeMap<
+      std::pair<typename MemberFunctionHelper<TagAndSignatureTypes>::Tag,
+                typename MemberFunctionHelper<
+                    TagAndSignatureTypes>::WrappedMemberFunctionVariant>...>;
+};
+}
+
+template <typename TagType, typename SignatureType> struct TagAndSignature
+{
+  using Tag = TagType;
+  using Signature = SignatureType;
+};
+
+template <typename TagAndSignatureType> class TypeErased
+{
+private:
+  using Signature = typename TagAndSignatureType::Signature;
 
 public:
   template <typename T, typename MemberFunction>
   TypeErased (T &&t, const MemberFunction &member_function)
-      : mMemberFunctionVariant{ detail::member_function<T, MemberFunction,
-                                                        Signature> () },
-        mMemberFunction{ member_function }, mObject{ std::forward<T> (t) }
+      : m_wrapped_member_functions{ detail::member_function<T, MemberFunction,
+                                                            Signature> () },
+        m_object_member_functions{ std::make_any<MemberFunction> (
+            member_function) },
+        m_object{ std::forward<T> (t) }
   {
   }
 
@@ -85,44 +109,48 @@ public:
   auto
   call (Args &&...args) const
   {
-    static_assert (std::is_same_v<CallTag, Tag>);
-    if (std::holds_alternative<WrappedConstMemberFunctionPtr> (
-            mMemberFunctionVariant))
-      {
-        const auto const_function
-            = std::get<WrappedConstMemberFunctionPtr> (mMemberFunctionVariant);
-        return (*const_function) (
-            mObject, mMemberFunction,
-            std::forward_as_tuple (std::forward<Args> (args)...));
-      }
-    assert (false);
+    const auto &wrapped_member
+        = m_wrapped_member_functions.template get<CallTag> ();
+
+    assert (wrapped_member.index ()
+            == detail::const_member_function_wrapper_index);
+
+    const auto &object_member
+        = m_object_member_functions.template get<CallTag> ();
+    const auto &function
+        = std::get<detail::const_member_function_wrapper_index> (
+            wrapped_member);
+    return (*function) (m_object, object_member,
+                        std::forward_as_tuple (std::forward<Args> (args)...));
   }
 
   template <typename CallTag, typename... Args>
   auto
   call (Args &&...args)
   {
-    static_assert (std::is_same_v<CallTag, Tag>);
-    if (std::holds_alternative<WrappedConstMemberFunctionPtr> (
-            mMemberFunctionVariant))
-      {
-        const auto const_function
-            = std::get<WrappedConstMemberFunctionPtr> (mMemberFunctionVariant);
-        return (*const_function) (
-            mObject, mMemberFunction,
-            std::forward_as_tuple (std::forward<Args> (args)...));
-      }
-
-    const auto function
-        = std::get<WrappedMemberFunctionPtr> (mMemberFunctionVariant);
-    return (*function) (mObject, mMemberFunction,
-                        std::forward_as_tuple (std::forward<Args> (args)...));
+    const auto &wrapped_member
+        = m_wrapped_member_functions.template get<CallTag> ();
+    return std::visit (
+        [&args..., this] (const auto &function) {
+          const auto &object_member
+              = m_object_member_functions.template get<CallTag> ();
+          return (*function) (
+              m_object, object_member,
+              std::forward_as_tuple (std::forward<Args> (args)...));
+        },
+        wrapped_member);
   }
 
 private:
-  WrappedMemberFunctionVariant mMemberFunctionVariant;
-  std::any mMemberFunction;
-  std::any mObject;
+  using WrappedMemberTypeMap =
+      typename detail::TagMemberFunctionMap<TagAndSignatureType>::Map;
+  using MemberFunctionTypeMap =
+      typename detail::TagValueMap<std::any, TagAndSignatureType>::Map;
+
+  WrappedMemberTypeMap m_wrapped_member_functions;
+  MemberFunctionTypeMap m_object_member_functions;
+
+  std::any m_object;
 };
 }
 
