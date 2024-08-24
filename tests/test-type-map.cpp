@@ -71,6 +71,6 @@ TEST_CASE ("Type map", "[typemap]")
 
   const auto test_map = TestMap{ 42, 84.0 };
 
-  REQUIRE (test_map.template get<Key1> () == 42);
-  REQUIRE (test_map.template get<Key2> () == 84.0);
+  CHECK (test_map.template get<Key1> () == 42);
+  CHECK (test_map.template get<Key2> () == 84.0);
 }

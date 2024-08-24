@@ -125,26 +125,26 @@ TEST_CASE ("Wrapper", "[wrapper]")
   const auto t = Tester{};
   const auto wrapper
       = gte::TypeErased<TheAnswerFunction>{ t, &Tester::the_answer };
-  REQUIRE (wrapper.call<TheAnswer> () == 42);
+  CHECK (wrapper.call<TheAnswer> () == 42);
 }
 
 TEST_CASE ("Copy counts", "[wrapper]")
 {
   auto copy_move_counter = CopyMoveCounter{};
-  REQUIRE (copy_move_counter.copies () == 0);
-  REQUIRE (copy_move_counter.moves () == 0);
+  CHECK (copy_move_counter.copies () == 0);
+  CHECK (copy_move_counter.moves () == 0);
 
   const auto &cm_counter_ref = copy_move_counter;
-  REQUIRE (cm_counter_ref.copies () == 0);
-  REQUIRE (cm_counter_ref.moves () == 0);
+  CHECK (cm_counter_ref.copies () == 0);
+  CHECK (cm_counter_ref.moves () == 0);
 
   const auto cm_counter_copy = copy_move_counter;
-  REQUIRE (cm_counter_copy.copies () == 1);
-  REQUIRE (cm_counter_copy.moves () == 0);
+  CHECK (cm_counter_copy.copies () == 1);
+  CHECK (cm_counter_copy.moves () == 0);
 
   const auto cm_counter_move = std::move (copy_move_counter);
-  REQUIRE (cm_counter_move.copies () == 0);
-  REQUIRE (cm_counter_move.moves () == 1);
+  CHECK (cm_counter_move.copies () == 0);
+  CHECK (cm_counter_move.moves () == 1);
 }
 
 TEST_CASE ("Wrapper copy moves", "[wrapper]")
@@ -158,8 +158,8 @@ TEST_CASE ("Wrapper copy moves", "[wrapper]")
     const auto wrapper_const_ref_arg
         = gte::TypeErased<CopyMoveFunction>{ t, &Tester::const_ref_arg };
     auto counter = CopyMoveCounter{};
-    REQUIRE (wrapper_const_ref_arg.call<CopyCounter> (counter).first == 0);
-    REQUIRE (wrapper_const_ref_arg.call<CopyCounter> (counter).second == 0);
+    CHECK (wrapper_const_ref_arg.call<CopyCounter> (counter).first == 0);
+    CHECK (wrapper_const_ref_arg.call<CopyCounter> (counter).second == 0);
   }
   SECTION ("Value")
   {
@@ -169,8 +169,8 @@ TEST_CASE ("Wrapper copy moves", "[wrapper]")
     const auto wrapper_value_arg
         = gte::TypeErased<CopyMoveFunction>{ t, &Tester::value_arg };
     auto counter = CopyMoveCounter{};
-    REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).first == 1);
-    REQUIRE (wrapper_value_arg.call<CopyCounter> (counter).second == 2);
+    CHECK (wrapper_value_arg.call<CopyCounter> (counter).first == 1);
+    CHECK (wrapper_value_arg.call<CopyCounter> (counter).second == 2);
   }
   SECTION ("R-value ref")
   {
@@ -182,16 +182,16 @@ TEST_CASE ("Wrapper copy moves", "[wrapper]")
         = gte::TypeErased<CopyMoveFunction>{ t, &Tester::r_value_ref_arg };
 
     auto counter_for_r_values_1 = CopyMoveCounter{};
-    REQUIRE (wrapper_r_value_ref_arg
-                 .call<CopyCounter> (std::move (counter_for_r_values_1))
-                 .first
-             == 0);
+    CHECK (wrapper_r_value_ref_arg
+               .call<CopyCounter> (std::move (counter_for_r_values_1))
+               .first
+           == 0);
 
     auto counter_for_r_values_2 = CopyMoveCounter{};
-    REQUIRE (wrapper_r_value_ref_arg
-                 .call<CopyCounter> (std::move (counter_for_r_values_2))
-                 .second
-             == 0);
+    CHECK (wrapper_r_value_ref_arg
+               .call<CopyCounter> (std::move (counter_for_r_values_2))
+               .second
+           == 0);
   }
 }
 
@@ -202,8 +202,8 @@ TEST_CASE ("Non-const ref", "[wrapper]")
   auto wrapper
       = gte::TypeErased<SetTheAnswerFunction>{ t, &Tester::set_the_answer };
 
-  REQUIRE (wrapper.call<TheAnswer> (43) == 42);
-  REQUIRE (wrapper.call<TheAnswer> (44) == 43);
+  CHECK (wrapper.call<TheAnswer> (43) == 42);
+  CHECK (wrapper.call<TheAnswer> (44) == 43);
 }
 
 TEST_CASE ("Copies and moves on construction", "[wrapper]")
@@ -215,7 +215,7 @@ TEST_CASE ("Copies and moves on construction", "[wrapper]")
     const auto wrapper
         = gte::TypeErased<CopyCounterFunction>{ copy_move_counter,
                                                 &CopyMoveCounter::copies };
-    REQUIRE (wrapper.call<CopyCounter> () == 1);
+    CHECK (wrapper.call<CopyCounter> () == 1);
   }
   SECTION ("Expect no copies")
   {
@@ -223,7 +223,7 @@ TEST_CASE ("Copies and moves on construction", "[wrapper]")
     const auto wrapper
         = gte::TypeErased<CopyCounterFunction>{ std::move (copy_move_counter),
                                                 &CopyMoveCounter::copies };
-    REQUIRE (wrapper.call<CopyCounter> () == 0);
+    CHECK (wrapper.call<CopyCounter> () == 0);
   }
 }
 
@@ -233,7 +233,7 @@ TEST_CASE ("Tags to map", "[wrapper]")
       = gte::detail::TagValueMap<int,
                                  gte::TagAndSignature<TheAnswer, void ()> >;
   const auto map = typename Map::Map{ 42 };
-  REQUIRE (map.template get<TheAnswer> () == 42);
+  CHECK (map.template get<TheAnswer> () == 42);
 }
 
 TEST_CASE ("Member function map", "[wrapper]")
@@ -253,8 +253,8 @@ TEST_CASE ("Multiple const member functions", "[wrapper]")
     t, &Tester::the_answer, &Tester::multiply_the_answer
   };
 
-  REQUIRE (wrapper.call<TheAnswer> () == 42);
-  REQUIRE (wrapper.call<MultiplyTheAnswer> (2) == 84);
+  CHECK (wrapper.call<TheAnswer> () == 42);
+  CHECK (wrapper.call<MultiplyTheAnswer> (2) == 84);
 }
 
 TEST_CASE ("Multiple member functions, mixed const, non-const", "[wrapper]")
@@ -267,9 +267,9 @@ TEST_CASE ("Multiple member functions, mixed const, non-const", "[wrapper]")
     t, &Tester::set_the_answer, &Tester::the_answer
   };
 
-  REQUIRE (wrapper.call<TheAnswer> () == 42);
-  REQUIRE (wrapper.call<SetTheAnswer> (43) == 42);
-  REQUIRE (wrapper.call<TheAnswer> () == 43);
+  CHECK (wrapper.call<TheAnswer> () == 42);
+  CHECK (wrapper.call<SetTheAnswer> (43) == 42);
+  CHECK (wrapper.call<TheAnswer> () == 43);
 }
 
 TEST_CASE ("Copying and moving", "[wrapper]")
@@ -285,12 +285,12 @@ TEST_CASE ("Copying and moving", "[wrapper]")
   SECTION ("Copy")
   {
     const auto wrapper_2 = wrapper_1;
-    REQUIRE (wrapper_2.call<TheAnswer> () == 43);
+    CHECK (wrapper_2.call<TheAnswer> () == 43);
   }
   SECTION ("Move")
   {
     const auto wrapper_2 = std::move (wrapper_1);
-    REQUIRE (wrapper_2.call<TheAnswer> () == 43);
+    CHECK (wrapper_2.call<TheAnswer> () == 43);
   }
 }
 
@@ -305,8 +305,8 @@ TEST_CASE ("Copying and moving with counts", "[wrapper]")
       = CopyMoveCounterWrapper{ CopyMoveCounter{}, &CopyMoveCounter::copies,
                                 &CopyMoveCounter::moves };
 
-  REQUIRE (wrapper_1.call<CopyCounter> () == 0);
-  REQUIRE (wrapper_1.call<MoveCounter> () == 1);
+  CHECK (wrapper_1.call<CopyCounter> () == 0);
+  CHECK (wrapper_1.call<MoveCounter> () == 1);
 
   SECTION ("Copy")
   {
