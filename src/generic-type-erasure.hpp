@@ -95,7 +95,9 @@ template <typename TagType, typename SignatureType> struct TagAndSignature
 template <typename... TagAndSignatureTypes> class TypeErased
 {
 public:
-  template <typename T, typename... MemberFunctions>
+  template <typename T, typename... MemberFunctions,
+            std::enable_if_t<!std::is_same_v<std::decay_t<T>, TypeErased>,
+                             bool> = true>
   TypeErased (T &&t, const MemberFunctions &...member_functions)
       : m_wrapped_member_functions{ detail::member_function<
           T, MemberFunctions,

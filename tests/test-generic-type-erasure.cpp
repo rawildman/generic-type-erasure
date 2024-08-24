@@ -2,6 +2,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <vector>
+
 namespace
 {
 class CopyMoveCounter
@@ -265,4 +267,26 @@ TEST_CASE ("Multiple member functions, mixed const, non-const", "[wrapper]")
   REQUIRE (wrapper.call<TheAnswer> () == 42);
   REQUIRE (wrapper.call<SetTheAnswer> (43) == 42);
   REQUIRE (wrapper.call<TheAnswer> () == 43);
+}
+
+TEST_CASE ("Copying and moving", "[wrapper]")
+{
+  using TheAnswerFunction = gte::TagAndSignature<TheAnswer, int ()>;
+  using SetFunction = gte::TagAndSignature<SetTheAnswer, int (int)>;
+
+  auto wrapper_1 = gte::TypeErased<SetFunction, TheAnswerFunction>{
+    Tester{}, &Tester::set_the_answer, &Tester::the_answer
+  };
+  wrapper_1.call<SetTheAnswer> (43);
+
+  SECTION ("Copy")
+  {
+    const auto wrapper_2 = wrapper_1;
+    REQUIRE (wrapper_2.call<TheAnswer> () == 43);
+  }
+  SECTION ("Move")
+  {
+    const auto wrapper_2 = std::move (wrapper_1);
+    REQUIRE (wrapper_2.call<TheAnswer> () == 43);
+  }
 }
