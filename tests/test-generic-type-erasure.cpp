@@ -113,6 +113,9 @@ struct SetTheAnswer
 struct CopyCounter
 {
 };
+struct MoveCounter
+{
+};
 }
 
 TEST_CASE ("Wrapper", "[wrapper]")
@@ -288,5 +291,33 @@ TEST_CASE ("Copying and moving", "[wrapper]")
   {
     const auto wrapper_2 = std::move (wrapper_1);
     REQUIRE (wrapper_2.call<TheAnswer> () == 43);
+  }
+}
+
+TEST_CASE ("Copying and moving with counts", "[wrapper]")
+{
+  using CopyCounterFunction = gte::TagAndSignature<CopyCounter, unsigned ()>;
+  using MoveCounterFunction = gte::TagAndSignature<MoveCounter, unsigned ()>;
+  using CopyMoveCounterWrapper
+      = gte::TypeErased<CopyCounterFunction, MoveCounterFunction>;
+
+  auto wrapper_1
+      = CopyMoveCounterWrapper{ CopyMoveCounter{}, &CopyMoveCounter::copies,
+                                &CopyMoveCounter::moves };
+
+  REQUIRE (wrapper_1.call<CopyCounter> () == 0);
+  REQUIRE (wrapper_1.call<MoveCounter> () == 1);
+
+  SECTION ("Copy")
+  {
+    const auto wrapper_2 = wrapper_1;
+    CHECK (wrapper_2.call<CopyCounter> () == 1);
+    CHECK (wrapper_2.call<MoveCounter> () == 1);
+  }
+  SECTION ("Move")
+  {
+    const auto wrapper_2 = std::move (wrapper_1);
+    CHECK (wrapper_2.call<CopyCounter> () == 0);
+    CHECK (wrapper_2.call<MoveCounter> () == 1);
   }
 }
