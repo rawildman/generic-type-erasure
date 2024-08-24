@@ -9,18 +9,21 @@ class CopyMoveCounter
 {
 public:
   CopyMoveCounter () = default;
+
   CopyMoveCounter (const CopyMoveCounter &copy)
       : m_copies{ copy.m_copies + 1 }, m_moves{ copy.m_moves }
   {
     std::cout << "CopyMoveCounter(const&)\n";
   }
+
   CopyMoveCounter (CopyMoveCounter &&copy)
       : m_copies{ copy.m_copies }, m_moves{ copy.m_moves + 1 }
   {
     std::cout << "CopyMoveCounter(&&)\n";
   }
-  CopyMoveCounter &
-  operator= (const CopyMoveCounter &copy)
+
+  auto
+  operator= (const CopyMoveCounter &copy) -> CopyMoveCounter &
   {
     std::cout << "operator=(const&)\n";
     if (this != &copy)
@@ -30,8 +33,9 @@ public:
       }
     return *this;
   }
-  CopyMoveCounter &
-  operator= (CopyMoveCounter &&copy)
+
+  auto
+  operator= (CopyMoveCounter &&copy) -> CopyMoveCounter &
   {
     std::cout << "operator=(&&)\n";
     m_copies = copy.m_copies;
@@ -58,13 +62,21 @@ private:
 struct Tester
 {
   int answer = 42;
-  int
-  forty_two () const
+
+  auto
+  forty_two () const -> int
   {
     return answer;
   }
-  int
-  set_forty_two (const int new_value)
+
+  auto
+  multiply_the_answer (const int multiplier) const -> int
+  {
+    return multiplier * answer;
+  }
+
+  auto
+  set_forty_two (const int new_value) -> int
   {
     const auto old_answer = answer;
     answer = new_value;
@@ -77,11 +89,13 @@ struct Tester
   {
     return { arg.copies (), arg.moves () };
   }
+
   auto
   value_arg (CopyMoveCounter arg) const -> std::pair<unsigned, unsigned>
   {
     return { arg.copies (), arg.moves () };
   }
+
   auto
   r_value_ref_arg (CopyMoveCounter &&arg) const
       -> std::pair<unsigned, unsigned>
@@ -93,7 +107,10 @@ struct Tester
 struct FortyTwo
 {
 };
-struct FortyThree
+struct MultiplyTheAnswer
+{
+};
+struct SetFortyTwo
 {
 };
 struct CopyCounter
@@ -181,7 +198,7 @@ TEST_CASE ("Wrapper copy moves", "[wrapper]")
 TEST_CASE ("Non-const ref", "[wrapper]")
 {
   using SetFortyTwoFunction = gte::TagAndSignature<FortyTwo, int (int)>;
-  auto t = Tester{};
+  const auto t = Tester{};
   auto wrapper
       = gte::TypeErased<SetFortyTwoFunction>{ t, &Tester::set_forty_two };
 
@@ -224,4 +241,33 @@ TEST_CASE ("Member function map", "[wrapper]")
   using Map = gte::detail::TagMemberFunctionMap<
       gte::TagAndSignature<FortyTwo, void ()> >;
   static_assert (Map::Map::number_of_keys == 1);
+}
+
+TEST_CASE ("Multiple const member functions", "[wrapper]")
+{
+  using FortyTwoFunction = gte::TagAndSignature<FortyTwo, int ()>;
+  using MultiplyFunction = gte::TagAndSignature<MultiplyTheAnswer, int (int)>;
+
+  auto t = Tester{};
+  const auto wrapper = gte::TypeErased<FortyTwoFunction, MultiplyFunction>{
+    t, &Tester::forty_two, &Tester::multiply_the_answer
+  };
+
+  REQUIRE (wrapper.call<FortyTwo> () == 42);
+  REQUIRE (wrapper.call<MultiplyTheAnswer> (2) == 84);
+}
+
+TEST_CASE ("Multiple member functions, mixed const, non-const", "[wrapper]")
+{
+  using FortyTwoFunction = gte::TagAndSignature<FortyTwo, int ()>;
+  using SetFunction = gte::TagAndSignature<SetFortyTwo, int (int)>;
+
+  auto t = Tester{};
+  auto wrapper = gte::TypeErased<SetFunction, FortyTwoFunction>{
+    t, &Tester::set_forty_two, &Tester::forty_two
+  };
+
+  REQUIRE (wrapper.call<FortyTwo> () == 42);
+  REQUIRE (wrapper.call<SetFortyTwo> (43) == 42);
+  REQUIRE (wrapper.call<FortyTwo> () == 43);
 }

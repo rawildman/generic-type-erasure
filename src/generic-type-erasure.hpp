@@ -21,12 +21,14 @@ member_function ()
 {
   using MemberSignature = MemberFunctionSignatureHelper<MemberFunction>;
   using ArgTypes = typename detail::SignatureHelper<Signature>::ArgTypes;
+  using BaseType = std::decay_t<T>;
   if constexpr (MemberSignature::is_const)
     {
       return [] (const std::any &object, const std::any &pointer_to_member,
                  ArgTypes &&args) {
-        const auto any_as_t
-            = std::tuple<const T &>{ std::any_cast<const T &> (object) };
+        const auto any_as_t = std::tuple<const BaseType &>{
+          std::any_cast<const BaseType &> (object)
+        };
         const auto any_as_mem_fun
             = std::any_cast<MemberFunction> (pointer_to_member);
         return std::apply (any_as_mem_fun,
@@ -37,7 +39,8 @@ member_function ()
     {
       return [] (std::any &object, const std::any &pointer_to_member,
                  ArgTypes &&args) {
-        auto any_as_t = std::tuple<T &>{ std::any_cast<T &> (object) };
+        auto any_as_t
+            = std::tuple<BaseType &>{ std::any_cast<BaseType &> (object) };
         const auto any_as_mem_fun
             = std::any_cast<MemberFunction> (pointer_to_member);
         return std::apply (any_as_mem_fun,
@@ -89,18 +92,16 @@ template <typename TagType, typename SignatureType> struct TagAndSignature
   using Signature = SignatureType;
 };
 
-template <typename TagAndSignatureType> class TypeErased
+template <typename... TagAndSignatureTypes> class TypeErased
 {
-private:
-  using Signature = typename TagAndSignatureType::Signature;
-
 public:
-  template <typename T, typename MemberFunction>
-  TypeErased (T &&t, const MemberFunction &member_function)
-      : m_wrapped_member_functions{ detail::member_function<T, MemberFunction,
-                                                            Signature> () },
-        m_object_member_functions{ std::make_any<MemberFunction> (
-            member_function) },
+  template <typename T, typename... MemberFunctions>
+  TypeErased (T &&t, const MemberFunctions &...member_functions)
+      : m_wrapped_member_functions{ detail::member_function<
+          T, MemberFunctions,
+          typename TagAndSignatureTypes::Signature> ()... },
+        m_object_member_functions{ std::make_any<MemberFunctions> (
+            member_functions)... },
         m_object{ std::forward<T> (t) }
   {
   }
@@ -143,9 +144,9 @@ public:
 
 private:
   using WrappedMemberTypeMap =
-      typename detail::TagMemberFunctionMap<TagAndSignatureType>::Map;
+      typename detail::TagMemberFunctionMap<TagAndSignatureTypes...>::Map;
   using MemberFunctionTypeMap =
-      typename detail::TagValueMap<std::any, TagAndSignatureType>::Map;
+      typename detail::TagValueMap<std::any, TagAndSignatureTypes...>::Map;
 
   WrappedMemberTypeMap m_wrapped_member_functions;
   MemberFunctionTypeMap m_object_member_functions;
