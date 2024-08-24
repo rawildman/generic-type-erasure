@@ -101,6 +101,25 @@ struct Tester
   }
 };
 
+struct Tester2
+{
+  int answer = 42;
+
+  auto
+  the_answer_2 () const -> int
+  {
+    return answer;
+  }
+
+  auto
+  set_the_answer_2 (const int new_value) -> int
+  {
+    const auto old_answer = answer;
+    answer = new_value;
+    return old_answer;
+  }
+};
+
 struct TheAnswer
 {
 };
@@ -320,4 +339,38 @@ TEST_CASE ("Copying and moving with counts", "[wrapper]")
     CHECK (wrapper_2.call<CopyCounter> () == 0);
     CHECK (wrapper_2.call<MoveCounter> () == 1);
   }
+}
+
+TEST_CASE ("Check usage in vector", "[wrapper]")
+{
+  using TheAnswerFunction = gte::TagAndSignature<TheAnswer, int ()>;
+  using SetFunction = gte::TagAndSignature<SetTheAnswer, int (int)>;
+  using Wrapper = gte::TypeErased<SetFunction, TheAnswerFunction>;
+  auto wrapper_1
+      = Wrapper{ Tester{}, &Tester::set_the_answer, &Tester::the_answer };
+  auto wrapper_2 = Wrapper{ Tester2{}, &Tester2::set_the_answer_2,
+                            &Tester2::the_answer_2 };
+
+  // Set objects values to the loop index, using two different types for
+  // odd/even entries
+  auto answers = std::vector<Wrapper>{};
+  constexpr auto num_entries = 6;
+  for (auto index = 0; index < num_entries; ++index)
+    {
+      if (index % 2)
+        {
+          answers.push_back (wrapper_1);
+        }
+      else
+        {
+          answers.push_back (wrapper_2);
+        }
+      answers.back ().call<SetTheAnswer> (index);
+    }
+
+  // Check that values were set to the index
+  for (auto index = 0; index < num_entries; ++index)
+    {
+      CHECK (answers.at (index).call<TheAnswer> () == index);
+    }
 }
