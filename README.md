@@ -1,8 +1,7 @@
-# generic-type-erasure
+# TypeErased: A prototype for a generic type erasure wrapper in c++.
 
 ## Introduction
 
-A prototype for a generic type erasure wrapper in c++.
 
 The purpose of this wrapper is to help alleviate some of the boiler-plate code necessary for some implementations of type erasure.
 The wrapper `gte::TypeErased` can be constructed with any object that has member functions that match the signatures provided to the wrapper declaration.
