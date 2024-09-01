@@ -39,7 +39,8 @@ struct Cat
   void meow() const { std::cout << "meow\n"; }
 };
 
-const auto cat = Speaker{Cat{}, &Cat::purr};
+const auto cat1 = Speaker{Cat{}, &Cat::meow}; // OK
+const auto cat2 = Speaker{Cat{}, &Cat::purr}; // Will not compile, constness of member functions does not match
 ```
 
 nor will

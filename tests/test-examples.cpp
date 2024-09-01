@@ -36,6 +36,8 @@ TEST_CASE("Speaker", "[examples]") {
   // const auto cat = Speaker{Cat{}, &Cat::purr}; // Constness does not match
   auto cat = Speaker{Cat{}, &Cat::meow};
   cat.call<Speak>();  // Calling const member with a non-const object ok
+  // const auto cat2 = Speaker{Cat{}, &Cat::purr}; // Will not compile,
+  // constness of member functions does not match
 }
 
 TEST_CASE("Treat eater", "[examples]") {
@@ -45,5 +47,6 @@ TEST_CASE("Treat eater", "[examples]") {
 }
 
 TEST_CASE("No hybrids", "[examples]") {
-  const auto dog_cat_hybrid = Speaker{Dog{}, &Cat::meow};
+  //  const auto dog_cat_hybrid = Speaker{Dog{}, &Cat::meow}; // Cannot mix
+  //  types and member functions
 }
