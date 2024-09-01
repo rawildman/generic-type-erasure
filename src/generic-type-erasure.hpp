@@ -13,7 +13,7 @@
 namespace gte {
 namespace detail {
 template <typename T, typename MemberFunction, typename Signature>
-auto member_function() {
+[[nodiscard]] auto member_function() {
   using MemberSignature = MemberFunctionSignatureHelper<MemberFunction>;
   using ArgTypes = typename detail::SignatureHelper<Signature>::ArgTypes;
   using BaseType = std::decay_t<T>;
@@ -74,12 +74,26 @@ struct TagMemberFunctionMap {
                 typename MemberFunctionHelper<
                     TagAndSignatureTypes>::WrappedMemberFunctionVariant>...>;
 };
+
+template <typename... TagAndSignatureTypes>
+[[nodiscard]] constexpr auto const_map() {
+  using ConstMap = typename TagValueMap<bool, TagAndSignatureTypes...>::Map;
+  return ConstMap{TagAndSignatureTypes::is_const...};
+}
 }  // namespace detail
 
 template <typename TagType, typename SignatureType>
 struct TagAndSignature {
   using Tag = TagType;
   using Signature = SignatureType;
+  static constexpr bool is_const = false;
+};
+
+template <typename TagType, typename SignatureType>
+struct TagAndConstSignature {
+  using Tag = TagType;
+  using Signature = SignatureType;
+  static constexpr bool is_const = true;
 };
 
 template <typename... TagAndSignatureTypes>
@@ -102,6 +116,10 @@ class TypeErased {
 
     assert(wrapped_member.index() ==
            detail::const_member_function_wrapper_index);
+
+    static_assert(
+        m_member_function_is_const.template get<CallTag>(),
+        "Attempted call of a non-const member function with a const object.");
 
     const auto &object_member =
         m_object_member_functions.template get<CallTag>();
@@ -131,6 +149,9 @@ class TypeErased {
       typename detail::TagMemberFunctionMap<TagAndSignatureTypes...>::Map;
   using MemberFunctionTypeMap =
       typename detail::TagValueMap<std::any, TagAndSignatureTypes...>::Map;
+
+  static constexpr auto m_member_function_is_const =
+      detail::const_map<TagAndSignatureTypes...>();
 
   WrappedMemberTypeMap m_wrapped_member_functions;
   MemberFunctionTypeMap m_object_member_functions;
