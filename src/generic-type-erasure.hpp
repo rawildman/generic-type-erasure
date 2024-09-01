@@ -114,12 +114,11 @@ class TypeErased {
     const auto &wrapped_member =
         m_wrapped_member_functions.template get<CallTag>();
 
-    assert(wrapped_member.index() ==
-           detail::const_member_function_wrapper_index);
-
-    static_assert(
-        m_member_function_is_const.template get<CallTag>(),
-        "Attempted call of a non-const member function with a const object.");
+    constexpr auto is_const =
+        m_member_function_is_const.template get<CallTag>();
+    static_assert(is_const,
+                  "Attempted call of a non-const member "
+                  "function with a const object.");
 
     const auto &object_member =
         m_object_member_functions.template get<CallTag>();
