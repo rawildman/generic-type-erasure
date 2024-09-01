@@ -19,7 +19,7 @@ template <typename T, typename MemberFunction, typename Signature>
   using BaseType = std::decay_t<T>;
 
   static_assert(
-      std::is_same_v<std::decay_t<T>, typename MemberSignature::Name>,
+      std::is_same_v<BaseType, typename MemberSignature::Name>,
       "The object type does not match the member function's object type.");
 
   if constexpr (MemberSignature::is_const) {
