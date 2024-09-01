@@ -59,6 +59,15 @@ TEST_CASE("Type map", "[typemap]") {
 
   const auto test_map = TestMap{42, 84.0};
 
-  CHECK(test_map.template get<Key1>() == 42);
-  CHECK(test_map.template get<Key2>() == 84.0);
+  CHECK(test_map.get<Key1>() == 42);
+  CHECK(test_map.get<Key2>() == 84.0);
+}
+
+TEST_CASE("Type map to constexpr bool", "[typemap]")
+{
+  using TestMap = gte::TypeMap<std::pair<Key1, bool>, std::pair<Key2, bool>>;
+  constexpr auto test_map = TestMap{true, false};
+
+  static_assert(test_map.get<Key1>());
+  static_assert(!test_map.get<Key2>());
 }
