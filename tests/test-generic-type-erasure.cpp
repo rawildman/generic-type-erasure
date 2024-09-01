@@ -308,3 +308,31 @@ TEST_CASE("Const map", "[wrapper]") {
   static_assert(!test_map.template get<Key1>());
   static_assert(test_map.template get<Key2>());
 }
+
+TEST_CASE("Enforce constness", "[wrapper]") {
+  using KeyWithSignature = gte::TagAndSignature<Key1, int()>;
+  // Non-const wrapper member, ok with const or non-const
+  static_assert(
+      gte::detail::constness_matches<decltype(&Tester::set_the_answer),
+                                     KeyWithSignature>());
+  static_assert(gte::detail::constness_matches<decltype(&Tester::the_answer),
+                                               KeyWithSignature>());
+  gte::detail::enforce_constness<decltype(&Tester::set_the_answer),
+                                 KeyWithSignature>();
+  gte::detail::enforce_constness<decltype(&Tester::the_answer),
+                                 KeyWithSignature>();
+
+  // Const member
+  using KeyWithConstSignature = gte::TagAndConstSignature<Key2, int()>;
+  static_assert(gte::detail::constness_matches<decltype(&Tester::the_answer),
+                                               KeyWithConstSignature>());
+  static_assert(
+      !gte::detail::constness_matches<decltype(&Tester::set_the_answer),
+                                      KeyWithConstSignature>());
+
+  gte::detail::enforce_constness<decltype(&Tester::the_answer),
+                                 KeyWithConstSignature>();
+  // The following commented code should not compile:
+  // gte::detail::enforce_constness<decltype(&Tester::set_the_answer),
+  // KeyWithConstSignature>();
+}

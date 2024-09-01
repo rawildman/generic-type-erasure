@@ -80,6 +80,19 @@ template <typename... TagAndSignatureTypes>
   using ConstMap = typename TagValueMap<bool, TagAndSignatureTypes...>::Map;
   return ConstMap{TagAndSignatureTypes::is_const...};
 }
+
+template <typename MemberFunction, typename TagAndSignatureType>
+[[nodiscard]] constexpr auto constness_matches() -> bool {
+  using MemberSignature = MemberFunctionSignatureHelper<MemberFunction>;
+  return !TagAndSignatureType::is_const || MemberSignature::is_const;
+}
+
+template <typename MemberFunction, typename TagAndSignatureType>
+constexpr void enforce_constness() {
+  static_assert(constness_matches<MemberFunction, TagAndSignatureType>(),
+                "const TypeErased member functions must be constructed with "
+                "const member functions.");
+}
 }  // namespace detail
 
 template <typename TagType, typename SignatureType>
@@ -107,19 +120,20 @@ class TypeErased {
             T, MemberFunctions, typename TagAndSignatureTypes::Signature>()...},
         m_object_member_functions{
             std::make_any<MemberFunctions>(member_functions)...},
-        m_object{std::forward<T>(t)} {}
+        m_object{std::forward<T>(t)} {
+    (detail::enforce_constness<MemberFunctions, TagAndSignatureTypes>(), ...);
+  }
 
   template <typename CallTag, typename... Args>
   auto call(Args &&...args) const {
-    const auto &wrapped_member =
-        m_wrapped_member_functions.template get<CallTag>();
-
     constexpr auto is_const =
         m_member_function_is_const.template get<CallTag>();
     static_assert(is_const,
                   "Attempted call of a non-const member "
                   "function with a const object.");
 
+    const auto &wrapped_member =
+        m_wrapped_member_functions.template get<CallTag>();
     const auto &object_member =
         m_object_member_functions.template get<CallTag>();
     const auto &function =
