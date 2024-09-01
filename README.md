@@ -18,7 +18,7 @@ using SpeakFunction = gte::ConstMemberSignature<Speak, void()>;
 using Speaker = gte::TypeErased<SpeakFunction>;
 ```
 
-This example defines a TypeErased type specialized for a const member function that may be called with the `Speak` struct using tag dispatch.
+This example defines a `TypeErased` type specialized for a const member function that may be called with the `Speak` struct using tag dispatch.
 The wrapper can be then used as:
 
 ```cpp
@@ -80,7 +80,7 @@ const auto dog_cat_hybrid = Speaker{Dog{}, &Cat::meow};
 
 ## Full example
 
-The following demonstrates a type-erased `Pet` wrapper, to which Dog and Cat objects are assigned.
+The following demonstrates a type-erased `Pet` wrapper, to which `Dog` and `Cat` objects are assigned.
 The objects are stored in a vector and each member function is called to demonstrate the usage of the wrapper object.
 Also, helper functions are defined for creating the type-erased wrapper from each object to avoid repeating the member function pointer arguments to the wrapper constructor.
 
