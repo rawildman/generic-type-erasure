@@ -5,7 +5,7 @@
 
 namespace {
 struct Speak {};
-using SpeakFunction = gte::TagAndConstSignature<Speak, void()>;
+using SpeakFunction = gte::ConstMemberSignature<Speak, void()>;
 using Speaker = gte::TypeErased<SpeakFunction>;
 
 struct Dog {
@@ -22,9 +22,9 @@ struct Cat {
 };
 
 struct GiveTreat {};
-using GiveTreatFunction = gte::TagAndSignature<GiveTreat, void(int)>;
+using GiveTreatFunction = gte::MemberSignature<GiveTreat, void(int)>;
 struct Weight {};
-using WeightFunction = gte::TagAndConstSignature<Weight, int()>;
+using WeightFunction = gte::ConstMemberSignature<Weight, int()>;
 
 using TreatEater = gte::TypeErased<GiveTreatFunction, WeightFunction>;
 }  // namespace
@@ -53,16 +53,16 @@ TEST_CASE("No hybrids", "[examples]") {
 
 namespace full_example {
 struct Speak {};
-using SpeakFunction = gte::TagAndConstSignature<Speak, void()>;
+using SpeakFunction = gte::ConstMemberSignature<Speak, void()>;
 
 struct GiveTreat {};
-using GiveTreatFunction = gte::TagAndSignature<GiveTreat, void(int)>;
+using GiveTreatFunction = gte::MemberSignature<GiveTreat, void(int)>;
 
 struct TakeForAWalk {};
-using TakeForAWalkFunction = gte::TagAndSignature<TakeForAWalk, void()>;
+using TakeForAWalkFunction = gte::MemberSignature<TakeForAWalk, void()>;
 
 struct Weight {};
-using WeightFunction = gte::TagAndConstSignature<Weight, int()>;
+using WeightFunction = gte::ConstMemberSignature<Weight, int()>;
 using Pet = gte::TypeErased<SpeakFunction, GiveTreatFunction,
                             TakeForAWalkFunction, WeightFunction>;
 

@@ -13,20 +13,20 @@
 
 namespace gte {
 template <typename TagType, typename SignatureType>
-struct TagAndSignature {
+struct MemberSignature {
   using Tag = TagType;
   using Signature = SignatureType;
   static constexpr bool is_const = false;
 };
 
 template <typename TagType, typename SignatureType>
-struct TagAndConstSignature {
+struct ConstMemberSignature {
   using Tag = TagType;
   using Signature = SignatureType;
   static constexpr bool is_const = true;
 };
 
-template <typename... TagAndSignatureTypes>
+template <typename... MemberSignatureTypes>
 class TypeErased {
  public:
   template <typename T, typename... MemberFunctions,
@@ -34,11 +34,11 @@ class TypeErased {
                              bool> = true>
   TypeErased(T &&t, const MemberFunctions &...member_functions)
       : m_wrapped_member_functions{detail::member_function<
-            T, MemberFunctions, typename TagAndSignatureTypes::Signature>()...},
+            T, MemberFunctions, typename MemberSignatureTypes::Signature>()...},
         m_object_member_functions{
             std::make_any<MemberFunctions>(member_functions)...},
         m_object{std::forward<T>(t)} {
-    (detail::enforce_constness<MemberFunctions, TagAndSignatureTypes>(), ...);
+    (detail::enforce_constness<MemberFunctions, MemberSignatureTypes>(), ...);
   }
 
   template <typename CallTag, typename... Args>
@@ -76,12 +76,12 @@ class TypeErased {
 
  private:
   using WrappedMemberTypeMap =
-      typename detail::TagMemberFunctionMap<TagAndSignatureTypes...>::Map;
+      typename detail::TagMemberFunctionMap<MemberSignatureTypes...>::Map;
   using MemberFunctionTypeMap =
-      typename detail::TagValueMap<std::any, TagAndSignatureTypes...>::Map;
+      typename detail::TagValueMap<std::any, MemberSignatureTypes...>::Map;
 
   static constexpr auto m_member_function_is_const =
-      detail::const_map<TagAndSignatureTypes...>();
+      detail::const_map<MemberSignatureTypes...>();
 
   WrappedMemberTypeMap m_wrapped_member_functions;
   MemberFunctionTypeMap m_object_member_functions;

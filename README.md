@@ -14,7 +14,7 @@ As an example, a wrapper for an object with a single const `Speak` member is def
 
 ```cpp
 struct Speak{};
-using SpeakFunction = gte::TagAndConstSignature<Speak, void()>;
+using SpeakFunction = gte::ConstMemberSignature<Speak, void()>;
 using Speaker = gte::TypeErased<SpeakFunction>;
 ```
 
@@ -31,8 +31,8 @@ const auto dog = Speaker{Dog{}, &Dog::speak};
 dog.call<Speak>();
 ```
 
-The structs `gte::TagAndConstSignature` and `gte::TagAndSignature` are helper structs to provide the tag struct and function signature to the wrapper.
-`gte::TagAndConstSignature` defines the corresponding `call` member as a const member function and `gte::TagAndSignature` defines `call` as a non-const member.
+The structs `gte::ConstMemberSignature` and `gte::MemberSignature` are helper structs to provide the tag struct and function signature to the wrapper.
+`gte::ConstMemberSignature` defines the corresponding `call` member as a const member function and `gte::MemberSignature` defines `call` as a non-const member.
 
 A type-erased wrapper object is constructed from an instance of a type that has a member matching the signature of the wrapper.
 In this case, the struct `Dog` has a const member `speak`, a pointer to which is used on construction.
@@ -55,9 +55,9 @@ nor will
 
 ```cpp
 struct GiveTreat{};
-using GiveTreatFunction = gte::TagAndSignature<GiveTreat, void(int)>;
+using GiveTreatFunction = gte::MemberSignature<GiveTreat, void(int)>;
 struct Weight{};
-using WeightFunction = gte::TagAndConstSignature<Weight, int()>;
+using WeightFunction = gte::ConstMemberSignature<Weight, int()>;
 using TreatEater = gte::TypeErased<GiveTreatFunction, WeightFunction>;
 
 struct Cat
@@ -87,16 +87,16 @@ Also, helper functions are defined for creating the type-erased wrapper from eac
 
 ```cpp
 struct Speak{};
-using SpeakFunction = gte::TagAndConstSignature<Speak, void()>;
+using SpeakFunction = gte::ConstMemberSignature<Speak, void()>;
 
 struct GiveTreat{};
-using GiveTreatFunction = gte::TagAndSignature<GiveTreat, void(int)>;
+using GiveTreatFunction = gte::MemberSignature<GiveTreat, void(int)>;
 
 struct TakeForAWalk{};
-using TakeForAWalkFunction = gte::TagAndSignature<TakeForAWalk, void()>;
+using TakeForAWalkFunction = gte::MemberSignature<TakeForAWalk, void()>;
 
 struct Weight{};
-using WeightFunction = gte::TagAndConstSignature<Weight, int()>;
+using WeightFunction = gte::ConstMemberSignature<Weight, int()>;
 using Pet = gte::TypeErased<SpeakFunction, GiveTreatFunction, TakeForAWalkFunction, WeightFunction>;
 
 struct Cat

@@ -88,7 +88,7 @@ struct Key2 {};
 }  // namespace
 
 TEST_CASE("Wrapper", "[wrapper]") {
-  using TheAnswerFunction = gte::TagAndConstSignature<TheAnswer, int()>;
+  using TheAnswerFunction = gte::ConstMemberSignature<TheAnswer, int()>;
 
   const auto t = Tester{};
   const auto wrapper =
@@ -118,7 +118,7 @@ TEST_CASE("Wrapper copy moves", "[wrapper]") {
   const auto t = Tester{};
   SECTION("Const ref") {
     using CopyMoveFunction =
-        gte::TagAndConstSignature<CopyCounter, std::pair<unsigned, unsigned>(
+        gte::ConstMemberSignature<CopyCounter, std::pair<unsigned, unsigned>(
                                                    const CopyMoveCounter &)>;
     const auto wrapper_const_ref_arg =
         gte::TypeErased<CopyMoveFunction>{t, &Tester::const_ref_arg};
@@ -128,7 +128,7 @@ TEST_CASE("Wrapper copy moves", "[wrapper]") {
   }
   SECTION("Value") {
     using CopyMoveFunction =
-        gte::TagAndConstSignature<CopyCounter, std::pair<unsigned, unsigned>(
+        gte::ConstMemberSignature<CopyCounter, std::pair<unsigned, unsigned>(
                                                    CopyMoveCounter)>;
     const auto wrapper_value_arg =
         gte::TypeErased<CopyMoveFunction>{t, &Tester::value_arg};
@@ -138,7 +138,7 @@ TEST_CASE("Wrapper copy moves", "[wrapper]") {
   }
   SECTION("R-value ref") {
     using CopyMoveFunction =
-        gte::TagAndConstSignature<CopyCounter, std::pair<unsigned, unsigned>(
+        gte::ConstMemberSignature<CopyCounter, std::pair<unsigned, unsigned>(
                                                    CopyMoveCounter &&)>;
 
     const auto wrapper_r_value_ref_arg =
@@ -157,7 +157,7 @@ TEST_CASE("Wrapper copy moves", "[wrapper]") {
 }
 
 TEST_CASE("Non-const ref", "[wrapper]") {
-  using SetTheAnswerFunction = gte::TagAndSignature<TheAnswer, int(int)>;
+  using SetTheAnswerFunction = gte::MemberSignature<TheAnswer, int(int)>;
   const auto t = Tester{};
   auto wrapper =
       gte::TypeErased<SetTheAnswerFunction>{t, &Tester::set_the_answer};
@@ -168,7 +168,7 @@ TEST_CASE("Non-const ref", "[wrapper]") {
 
 TEST_CASE("Copies and moves on construction", "[wrapper]") {
   using CopyCounterFunction =
-      gte::TagAndConstSignature<CopyCounter, unsigned()>;
+      gte::ConstMemberSignature<CopyCounter, unsigned()>;
   SECTION("Expect copy") {
     const auto copy_move_counter = CopyMoveCounter{};
     const auto wrapper = gte::TypeErased<CopyCounterFunction>{
@@ -185,21 +185,21 @@ TEST_CASE("Copies and moves on construction", "[wrapper]") {
 
 TEST_CASE("Tags to map", "[wrapper]") {
   using Map =
-      gte::detail::TagValueMap<int, gte::TagAndSignature<TheAnswer, void()> >;
+      gte::detail::TagValueMap<int, gte::MemberSignature<TheAnswer, void()> >;
   const auto map = typename Map::Map{42};
   CHECK(map.template get<TheAnswer>() == 42);
 }
 
 TEST_CASE("Member function map", "[wrapper]") {
   using Map = gte::detail::TagMemberFunctionMap<
-      gte::TagAndSignature<TheAnswer, void()> >;
+      gte::MemberSignature<TheAnswer, void()> >;
   static_assert(Map::Map::number_of_keys == 1);
 }
 
 TEST_CASE("Multiple const member functions", "[wrapper]") {
-  using TheAnswerFunction = gte::TagAndConstSignature<TheAnswer, int()>;
+  using TheAnswerFunction = gte::ConstMemberSignature<TheAnswer, int()>;
   using MultiplyFunction =
-      gte::TagAndConstSignature<MultiplyTheAnswer, int(int)>;
+      gte::ConstMemberSignature<MultiplyTheAnswer, int(int)>;
 
   auto t = Tester{};
   const auto wrapper = gte::TypeErased<TheAnswerFunction, MultiplyFunction>{
@@ -210,8 +210,8 @@ TEST_CASE("Multiple const member functions", "[wrapper]") {
 }
 
 TEST_CASE("Multiple member functions, mixed const, non-const", "[wrapper]") {
-  using TheAnswerFunction = gte::TagAndSignature<TheAnswer, int()>;
-  using SetFunction = gte::TagAndSignature<SetTheAnswer, int(int)>;
+  using TheAnswerFunction = gte::MemberSignature<TheAnswer, int()>;
+  using SetFunction = gte::MemberSignature<SetTheAnswer, int(int)>;
 
   auto t = Tester{};
   auto wrapper = gte::TypeErased<SetFunction, TheAnswerFunction>{
@@ -223,8 +223,8 @@ TEST_CASE("Multiple member functions, mixed const, non-const", "[wrapper]") {
 }
 
 TEST_CASE("Copying and moving", "[wrapper]") {
-  using TheAnswerFunction = gte::TagAndConstSignature<TheAnswer, int()>;
-  using SetFunction = gte::TagAndSignature<SetTheAnswer, int(int)>;
+  using TheAnswerFunction = gte::ConstMemberSignature<TheAnswer, int()>;
+  using SetFunction = gte::MemberSignature<SetTheAnswer, int(int)>;
 
   auto wrapper_1 = gte::TypeErased<SetFunction, TheAnswerFunction>{
       Tester{}, &Tester::set_the_answer, &Tester::the_answer};
@@ -242,9 +242,9 @@ TEST_CASE("Copying and moving", "[wrapper]") {
 
 TEST_CASE("Copying and moving with counts", "[wrapper]") {
   using CopyCounterFunction =
-      gte::TagAndConstSignature<CopyCounter, unsigned()>;
+      gte::ConstMemberSignature<CopyCounter, unsigned()>;
   using MoveCounterFunction =
-      gte::TagAndConstSignature<MoveCounter, unsigned()>;
+      gte::ConstMemberSignature<MoveCounter, unsigned()>;
   using CopyMoveCounterWrapper =
       gte::TypeErased<CopyCounterFunction, MoveCounterFunction>;
 
@@ -267,8 +267,8 @@ TEST_CASE("Copying and moving with counts", "[wrapper]") {
 }
 
 TEST_CASE("Check usage in vector", "[wrapper]") {
-  using TheAnswerFunction = gte::TagAndSignature<TheAnswer, int()>;
-  using SetFunction = gte::TagAndSignature<SetTheAnswer, int(int)>;
+  using TheAnswerFunction = gte::MemberSignature<TheAnswer, int()>;
+  using SetFunction = gte::MemberSignature<SetTheAnswer, int(int)>;
   using Wrapper = gte::TypeErased<SetFunction, TheAnswerFunction>;
   auto wrapper_1 =
       Wrapper{Tester{}, &Tester::set_the_answer, &Tester::the_answer};
@@ -295,13 +295,13 @@ TEST_CASE("Check usage in vector", "[wrapper]") {
 }
 
 TEST_CASE("Tag and signature constness", "[wrapper]") {
-  static_assert(gte::TagAndSignature<Key1, int()>::is_const == false);
-  static_assert(gte::TagAndConstSignature<Key1, int()>::is_const == true);
+  static_assert(gte::MemberSignature<Key1, int()>::is_const == false);
+  static_assert(gte::ConstMemberSignature<Key1, int()>::is_const == true);
 }
 
 TEST_CASE("Const map", "[wrapper]") {
-  using KeyWithSignature1 = gte::TagAndSignature<Key1, int()>;
-  using KeyWithSignature2 = gte::TagAndConstSignature<Key2, int()>;
+  using KeyWithSignature1 = gte::MemberSignature<Key1, int()>;
+  using KeyWithSignature2 = gte::ConstMemberSignature<Key2, int()>;
   constexpr auto test_map =
       gte::detail::const_map<KeyWithSignature1, KeyWithSignature2>();
 
@@ -310,7 +310,7 @@ TEST_CASE("Const map", "[wrapper]") {
 }
 
 TEST_CASE("Enforce constness", "[wrapper]") {
-  using KeyWithSignature = gte::TagAndSignature<Key1, int()>;
+  using KeyWithSignature = gte::MemberSignature<Key1, int()>;
   // Non-const wrapper member, ok with const or non-const
   static_assert(
       gte::detail::constness_matches<decltype(&Tester::set_the_answer),
@@ -323,7 +323,7 @@ TEST_CASE("Enforce constness", "[wrapper]") {
                                  KeyWithSignature>();
 
   // Const member
-  using KeyWithConstSignature = gte::TagAndConstSignature<Key2, int()>;
+  using KeyWithConstSignature = gte::ConstMemberSignature<Key2, int()>;
   static_assert(gte::detail::constness_matches<decltype(&Tester::the_answer),
                                                KeyWithConstSignature>());
   static_assert(
