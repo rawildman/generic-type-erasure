@@ -1,6 +1,7 @@
 set(SOURCES test-generic-type-erasure.cpp 
             test-type-helpers.cpp
-            test-type-map.cpp)
+            test-type-map.cpp
+            test-examples.cpp)
 
 add_executable(unit_tests ${SOURCES})
 target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain GenericTypeErasure)
